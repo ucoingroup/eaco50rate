@@ -1,0 +1,1454 @@
+<!DOCTYPE html>
+<html lang="zh-CN" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EACO 50 Country Oracle Panel · Solana Chain FX</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ===== RESET & BASE ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg-primary: #050d1a;
+      --bg-secondary: #0a1628;
+      --bg-card: #0d1f3c;
+      --bg-card-hover: #112244;
+      --border: #1a3352;
+      --border-bright: #2a4f7a;
+      --accent: #00d4ff;
+      --accent-dim: rgba(0,212,255,0.12);
+      --accent2: #7c3aed;
+      --accent2-dim: rgba(124,58,237,0.12);
+      --gold: #f59e0b;
+      --gold-dim: rgba(245,158,11,0.12);
+      --green: #10b981;
+      --green-dim: rgba(16,185,129,0.12);
+      --red: #ef4444;
+      --red-dim: rgba(239,68,68,0.12);
+      --yellow: #eab308;
+      --text-primary: #e2e8f0;
+      --text-secondary: #94a3b8;
+      --text-muted: #475569;
+      --font-main: 'Inter', 'Noto Sans SC', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --font-arabic: 'Noto Sans Arabic', 'Inter', sans-serif;
+      --radius: 12px;
+      --radius-sm: 6px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --shadow-lg: 0 8px 48px rgba(0,0,0,0.6);
+      --update-interval: 1800000; /* 30 min in ms */
+    }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--font-main); background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; overflow-x: hidden; }
+    body.ar { direction: rtl; font-family: var(--font-arabic), var(--font-main); }
+    [dir=rtl] body { font-family: var(--font-arabic), var(--font-main); }
+
+    /* ===== ANIMATED BACKGROUND ===== */
+    .bg-grid { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+      background-image: linear-gradient(rgba(0,212,255,0.025) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(0,212,255,0.025) 1px, transparent 1px);
+      background-size: 60px 60px; }
+    .bg-glow { position: fixed; width: 700px; height: 700px; border-radius: 50%;
+      filter: blur(150px); opacity: 0.06; z-index: 0; pointer-events: none; }
+    .bg-glow-1 { top: -250px; left: -150px; background: var(--accent); animation: pulseGlow 9s ease-in-out infinite; }
+    .bg-glow-2 { bottom: -250px; right: -150px; background: var(--accent2); animation: pulseGlow 11s ease-in-out infinite 3s; }
+    @keyframes pulseGlow { 0%,100%{opacity:0.04;transform:scale(1)} 50%{opacity:0.1;transform:scale(1.15)} }
+
+    /* ===== LAYOUT ===== */
+    .app { position: relative; z-index: 1; }
+    .container { max-width: 1440px; margin: 0 auto; padding: 0 24px; }
+
+    /* ===== HEADER ===== */
+    .header { padding: 24px 0 20px; border-bottom: 1px solid var(--border);
+      background: linear-gradient(180deg, rgba(0,212,255,0.05) 0%, transparent 100%); }
+    .header-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .logo-area { display: flex; align-items: center; gap: 16px; }
+    .logo-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; font-weight: 800; color: #fff; letter-spacing: 1px;
+      box-shadow: 0 0 28px rgba(0,212,255,0.35);
+    }
+    .logo-text h1 { font-size: 20px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+    .logo-text p { font-size: 11px; color: var(--text-muted); margin-top: 3px; font-family: var(--font-mono); }
+
+    /* ===== ORACLE STATUS BAR ===== */
+    .oracle-bar {
+      background: linear-gradient(90deg, rgba(0,212,255,0.08) 0%, rgba(124,58,237,0.08) 100%);
+      border-bottom: 1px solid rgba(0,212,255,0.15);
+      padding: 10px 0; display: flex; gap: 24px; align-items: center; flex-wrap: wrap;
+    }
+    .oracle-status { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+    .oracle-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .oracle-dot.green  { background: var(--green); box-shadow: 0 0 8px var(--green); animation: blinkOracle 2s ease-in-out infinite; }
+    .oracle-dot.yellow { background: var(--yellow); box-shadow: 0 0 8px var(--yellow); }
+    .oracle-dot.red    { background: var(--red); box-shadow: 0 0 8px var(--red); }
+    @keyframes blinkOracle { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .oracle-label { font-weight: 700; color: var(--accent); font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .oracle-meta { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+    .oracle-countdown { font-size: 12px; font-family: var(--font-mono); color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+    .oracle-countdown strong { color: var(--accent); }
+    .oracle-refresh-btn {
+      padding: 5px 14px; border-radius: var(--radius-sm); border: 1px solid rgba(0,212,255,0.3);
+      background: var(--accent-dim); color: var(--accent); font-size: 11px; font-weight: 700;
+      cursor: pointer; font-family: var(--font-mono); transition: all 0.2s; display: flex; align-items: center; gap: 6px;
+    }
+    .oracle-refresh-btn:hover { background: rgba(0,212,255,0.2); border-color: var(--accent); }
+    .oracle-refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .oracle-spinner { width: 12px; height: 12px; border: 2px solid rgba(0,212,255,0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; display: none; }
+    .oracle-spinner.show { display: block; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    /* ===== CONTROLS BAR ===== */
+    .controls-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .control-group { display: flex; align-items: center; gap: 4px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px; }
+    .control-label { font-size: 10px; color: var(--text-muted); padding: 0 6px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+    .ctrl-btn { padding: 5px 11px; border-radius: 4px; border: none; cursor: pointer; font-size: 12px; font-weight: 700; font-family: var(--font-mono); transition: all 0.15s; background: transparent; color: var(--text-secondary); }
+    .ctrl-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+    .ctrl-btn.active-sol  { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,212,255,0.3); }
+    .ctrl-btn.active-usdt { background: var(--accent2-dim); color: #a78bfa; border: 1px solid rgba(124,58,237,0.3); }
+    .ctrl-btn.active-ecnh { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(245,158,11,0.3); }
+    .ctrl-btn.active-eaco { background: var(--gold-dim); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+    .lang-selector { display: flex; gap: 2px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px; }
+    .lang-btn { padding: 5px 9px; border-radius: 4px; border: none; cursor: pointer; font-size: 11px; font-weight: 700; background: transparent; color: var(--text-muted); transition: all 0.15s; }
+    .lang-btn:hover { background: var(--bg-card-hover); color: var(--text-primary); }
+    .lang-btn.active { background: var(--accent-dim); color: var(--accent); }
+
+    /* ===== TICKER ===== */
+    .ticker-bar { padding: 10px 0; border-bottom: 1px solid var(--border); overflow: hidden; }
+    .ticker-track { display: flex; gap: 36px; animation: ticker 50s linear infinite; white-space: nowrap; }
+    .ticker-item { display: flex; align-items: center; gap: 8px; font-size: 12px; flex-shrink: 0; }
+    .ticker-sym { font-family: var(--font-mono); font-weight: 700; color: var(--accent); }
+    .ticker-val { color: var(--text-secondary); font-family: var(--font-mono); font-size: 11px; }
+    .ticker-ch.up { color: var(--green); font-size: 10px; font-family: var(--font-mono); }
+    .ticker-ch.dn { color: var(--red); font-size: 10px; font-family: var(--font-mono); }
+    @keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+
+    /* ===== LIVE DATA SOURCE BADGES ===== */
+    .source-badges { padding: 14px 0 0; display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+    .source-badge { display: flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 600; font-family: var(--font-mono); border: 1px solid; transition: all 0.3s; }
+    .source-badge.loading { background: rgba(255,255,255,0.03); border-color: var(--border); color: var(--text-muted); }
+    .source-badge.ok      { background: var(--green-dim); border-color: rgba(16,185,129,0.3); color: var(--green); }
+    .source-badge.warn    { background: var(--gold-dim); border-color: rgba(245,158,11,0.3); color: var(--gold); }
+    .source-badge.err     { background: var(--red-dim); border-color: rgba(239,68,68,0.3); color: var(--red); }
+    .source-badge .sdot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .source-badge.loading .sdot { animation: blinkOracle 1.5s infinite; }
+
+    /* ===== STATS ROW ===== */
+    .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; padding: 20px 0; }
+    .stat-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; position: relative; overflow: hidden; }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+    .stat-card.blue::before { background: linear-gradient(90deg, var(--accent), transparent); }
+    .stat-card.purple::before { background: linear-gradient(90deg, var(--accent2), transparent); }
+    .stat-card.gold::before { background: linear-gradient(90deg, var(--gold), transparent); }
+    .stat-card.green::before { background: linear-gradient(90deg, var(--green), transparent); }
+    .stat-card.red::before { background: linear-gradient(90deg, var(--red), transparent); }
+    .stat-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; font-weight: 600; }
+    .stat-value { font-family: var(--font-mono); font-size: 20px; font-weight: 700; color: #fff; }
+    .stat-value.accent { color: var(--accent); }
+    .stat-value.gold { color: var(--gold); }
+    .stat-sub { font-size: 10px; color: var(--text-muted); margin-top: 4px; font-family: var(--font-mono); }
+
+    /* ===== WARNING BANNER ===== */
+    .warning-banner { background: rgba(245,158,11,0.06); border: 1px solid rgba(245,158,11,0.2); border-radius: var(--radius); padding: 14px 18px; margin: 0 0 20px; display: flex; gap: 12px; align-items: flex-start; }
+    .warning-icon { font-size: 18px; flex-shrink: 0; }
+    .warning-text { font-size: 11px; color: var(--text-secondary); line-height: 1.7; }
+    .warning-text strong { color: var(--gold); font-weight: 700; }
+
+    /* ===== SECTION HEADER ===== */
+    .section-header { display: flex; align-items: center; justify-content: space-between; padding: 20px 0 14px; flex-wrap: wrap; gap: 10px; }
+    .section-title { font-size: 15px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .badge { font-size: 9px; font-weight: 800; padding: 3px 8px; border-radius: 12px; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 0.5px; }
+    .badge.blue   { background: var(--accent-dim); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+    .badge.purple { background: var(--accent2-dim); color: #a78bfa; border: 1px solid rgba(124,58,237,0.2); }
+    .badge.gold   { background: var(--gold-dim); color: var(--gold); border: 1px solid rgba(245,158,11,0.2); }
+    .last-update { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); display: flex; align-items: center; gap: 6px; }
+    .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: blinkOracle 2s ease-in-out infinite; flex-shrink: 0; }
+
+    /* ===== TOKEN GRID ===== */
+    .token-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .token-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; transition: all 0.2s; cursor: pointer; }
+    .token-card:hover { border-color: var(--border-bright); transform: translateY(-2px); box-shadow: var(--shadow); }
+    .token-header { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+    .token-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: 800; color: #fff; flex-shrink: 0; }
+    .token-icon.eaco   { background: linear-gradient(135deg, #f59e0b, #d97706); }
+    .token-icon.usdt   { background: linear-gradient(135deg, #26a17b, #1a8f6a); }
+    .token-icon.usdc   { background: linear-gradient(135deg, #2775ca, #1e5fa6); }
+    .token-icon.sol    { background: linear-gradient(135deg, #9945ff, #14f195); }
+    .token-icon.ecnh   { background: linear-gradient(135deg, #ef4444, #dc2626); }
+    .token-info h3 { font-size: 14px; font-weight: 700; color: #fff; }
+    .token-info p { font-size: 10px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 2px; word-break: break-all; line-height: 1.4; }
+    .token-price-row { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 10px; }
+    .token-price { font-family: var(--font-mono); font-size: 22px; font-weight: 700; }
+    .token-change { font-family: var(--font-mono); font-size: 11px; font-weight: 700; padding: 2px 6px; border-radius: 4px; }
+    .token-change.up { color: var(--green); background: var(--green-dim); }
+    .token-change.dn { color: var(--red); background: var(--red-dim); }
+    .token-links { display: flex; gap: 6px; flex-wrap: wrap; }
+    .token-link { font-size: 10px; color: var(--accent); text-decoration: none; padding: 2px 7px; border: 1px solid rgba(0,212,255,0.2); border-radius: 4px; transition: all 0.15s; font-weight: 600; }
+    .token-link:hover { background: var(--accent-dim); border-color: var(--accent); }
+
+    /* ===== FILTER ROW ===== */
+    .filter-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+    .filter-btn { padding: 5px 14px; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); font-size: 11px; font-weight: 700; cursor: pointer; transition: all 0.15s; }
+    .filter-btn:hover { border-color: var(--border-bright); color: var(--text-primary); }
+    .filter-btn.active { background: var(--accent-dim); border-color: rgba(0,212,255,0.4); color: var(--accent); }
+
+    /* ===== RATE TABLE ===== */
+    .rate-table-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 24px; }
+    .rate-table { width: 100%; border-collapse: collapse; }
+    .rate-table thead th { padding: 10px 14px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--border); white-space: nowrap; text-align: left; }
+    body[dir=rtl] .rate-table thead th { text-align: right; }
+    .rate-table tbody tr { border-bottom: 1px solid rgba(26,51,82,0.4); transition: background 0.1s; }
+    .rate-table tbody tr:hover { background: var(--bg-card-hover); }
+    .rate-table tbody tr:last-child { border-bottom: none; }
+    .rate-table td { padding: 9px 14px; font-size: 12px; color: var(--text-secondary); vertical-align: middle; }
+    .country-cell { display: flex; align-items: center; gap: 10px; }
+    .country-flag { font-size: 18px; width: 26px; text-align: center; flex-shrink: 0; }
+    .country-info .country-name { font-weight: 700; color: var(--text-primary); font-size: 13px; }
+    .country-info .country-code { font-size: 10px; color: var(--text-muted); font-family: var(--font-mono); }
+    .rate-value { font-family: var(--font-mono); font-weight: 700; font-size: 13px; color: #fff; }
+    .rate-value.highlight { color: var(--accent); }
+    .rate-raw { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
+    .tier-badge { display: inline-block; padding: 2px 7px; border-radius: 8px; font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.3px; }
+    .tier-1 { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+    .tier-2 { background: rgba(124,58,237,0.1); color: #a78bfa; border: 1px solid rgba(124,58,237,0.2); }
+    .tier-3 { background: rgba(245,158,11,0.1); color: var(--gold); border: 1px solid rgba(245,158,11,0.2); }
+    .adapt-tag { font-size: 9px; color: var(--text-muted); background: rgba(255,255,255,0.04); padding: 2px 5px; border-radius: 4px; margin-top: 2px; display: inline-block; }
+    .data-quality { display: inline-flex; align-items: center; gap: 4px; font-size: 9px; font-family: var(--font-mono); color: var(--green); }
+    .data-quality::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+    .data-quality.live { color: var(--green); }
+    .data-quality.sim  { color: var(--yellow); }
+
+    /* ===== PAGINATION ===== */
+    .pagination { display: flex; justify-content: center; align-items: center; gap: 5px; margin: 16px 0; flex-wrap: wrap; }
+    .page-btn { min-width: 34px; height: 34px; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card); color: var(--text-secondary); font-size: 12px; font-weight: 700; cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; padding: 0 8px; }
+    .page-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .page-btn.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+    .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .page-info { font-size: 11px; color: var(--text-muted); padding: 0 10px; font-family: var(--font-mono); }
+
+    /* ===== EACO TOP20 ===== */
+    .top20-section { margin-bottom: 32px; }
+    .top20-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+    .top20-item { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; align-items: center; gap: 12px; transition: all 0.15s; }
+    .top20-item:hover { border-color: var(--border-bright); }
+    .top20-rank { font-family: var(--font-mono); font-size: 16px; font-weight: 800; color: var(--accent); width: 32px; text-align: center; flex-shrink: 0; }
+    .top20-info { flex: 1; min-width: 0; }
+    .top20-info .name { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+    .top20-info .biz  { font-size: 10px; color: var(--text-muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* ===== FOOTER ===== */
+    .footer { border-top: 1px solid var(--border); padding: 24px 0; margin-top: 32px; }
+    .footer-inner { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; }
+    .footer-links { display: flex; gap: 14px; flex-wrap: wrap; }
+    .footer-link { font-size: 11px; color: var(--text-muted); text-decoration: none; transition: color 0.15s; font-family: var(--font-mono); }
+    .footer-link:hover { color: var(--accent); }
+    .footer-copy { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .header-inner { flex-direction: column; align-items: flex-start; }
+      .oracle-bar { gap: 12px; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .token-grid { grid-template-columns: 1fr 1fr; }
+      .rate-table { font-size: 11px; }
+    }
+    @media (max-width: 480px) {
+      .container { padding: 0 12px; }
+      .stats-row { grid-template-columns: 1fr 1fr; }
+      .token-grid { grid-template-columns: 1fr; }
+      .top20-grid { grid-template-columns: 1fr; }
+    }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg-secondary); }
+    ::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+    @media print { .controls-bar, .filter-row, .pagination, .oracle-bar, .warning-banner { display: none !important; } }
+  </style>
+</head>
+<body>
+  <div class="bg-grid"></div>
+  <div class="bg-glow bg-glow-1"></div>
+  <div class="bg-glow bg-glow-2"></div>
+
+  <div class="app">
+    <div class="container">
+
+      <!-- HEADER -->
+      <header class="header">
+        <div class="header-inner">
+          <div class="logo-area">
+            <div class="logo-icon">E50</div>
+            <div class="logo-text">
+              <h1 data-i18n="title">EACO 50国预言机汇率</h1>
+              <p>Solana Chain · FX Oracle · 实时参考汇率</p>
+            </div>
+          </div>
+          <div class="controls-bar">
+            <div class="control-group">
+              <span class="control-label" data-i18n="quote">基准</span>
+              <button class="ctrl-btn active-sol" data-quote="SOL" onclick="setQuote('SOL')">SOL</button>
+              <button class="ctrl-btn" data-quote="USDT" onclick="setQuote('USDT')">USDT</button>
+              <button class="ctrl-btn" data-quote="USDC" onclick="setQuote('USDC')">USDC</button>
+              <button class="ctrl-btn" data-quote="eCNH" onclick="setQuote('eCNH')">eCNH</button>
+              <button class="ctrl-btn" data-quote="EACO" onclick="setQuote('EACO')">EACO</button>
+            </div>
+            <div class="lang-selector" id="lang-selector">
+              <button class="lang-btn active" data-lang="zh" onclick="setLang('zh')">中文</button>
+              <button class="lang-btn" data-lang="en" onclick="setLang('en')">EN</button>
+              <button class="lang-btn" data-lang="fr" onclick="setLang('fr')">FR</button>
+              <button class="lang-btn" data-lang="ru" onclick="setLang('ru')">RU</button>
+              <button class="lang-btn" data-lang="es" onclick="setLang('es')">ES</button>
+              <button class="lang-btn" data-lang="ar" onclick="setLang('ar')">عربي</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- ORACLE STATUS BAR -->
+      <div class="oracle-bar">
+        <div class="oracle-status">
+          <div class="oracle-dot" id="oracle-dot"></div>
+          <span class="oracle-label" id="oracle-label">ORACLE SYNCING</span>
+          <span class="oracle-meta" id="oracle-meta">—</span>
+        </div>
+        <div class="oracle-countdown">
+          <span data-i18n="nextUpdate">下次更新</span>
+          <strong id="countdown-display">30:00</strong>
+        </div>
+        <div class="oracle-countdown">
+          <span data-i18n="lastUpdate">上次更新</span>
+          <strong id="last-update-display">—</strong>
+        </div>
+        <button class="oracle-refresh-btn" id="refresh-btn" onclick="manualRefresh()">
+          <div class="oracle-spinner" id="refresh-spinner"></div>
+          <span id="refresh-btn-text" data-i18n="refreshNow">🔄 立即刷新</span>
+        </button>
+      </div>
+
+      <!-- TICKER -->
+      <div class="ticker-bar">
+        <div class="ticker-track" id="ticker"></div>
+      </div>
+
+      <!-- DATA SOURCE BADGES -->
+      <div class="source-badges" id="source-badges">
+        <div class="source-badge loading" id="badge-sol"><div class="sdot"></div>SOL/USD · CoinGecko</div>
+        <div class="source-badge loading" id="badge-ecnh"><div class="sdot"></div>eCNH/USD · eCNH Oracle</div>
+        <div class="source-badge loading" id="badge-fx"><div class="sdot"></div>FX Rates · Forex API</div>
+        <div class="source-badge loading" id="badge-eaco"><div class="sdot"></div>EACO/USD · Orbmarkets</div>
+      </div>
+
+      <!-- STATS -->
+      <div class="stats-row" id="stats-row"></div>
+
+      <!-- WARNING -->
+      <div class="warning-banner" id="warning-banner">
+        <div class="warning-icon">⚠️</div>
+        <div class="warning-text" id="warning-text"></div>
+      </div>
+
+      <!-- TOKEN CARDS -->
+      <div class="section-header">
+        <div class="section-title">
+          <span data-i18n="coreTokens">核心代币实时价格</span>
+          <span class="badge blue">ORACLE FEED</span>
+        </div>
+        <div class="last-update">
+          <div class="live-dot"></div>
+          <span data-i18n="updated">更新于</span>
+          <span id="update-time">—</span>
+        </div>
+      </div>
+      <div class="token-grid" id="token-cards"></div>
+
+      <!-- FX PANEL -->
+      <div class="section-header">
+        <div class="section-title">
+          <span data-i18n="fxPanel">50国外贸汇率面板</span>
+          <span class="badge purple">50 COUNTRIES</span>
+        </div>
+        <div class="source-badge ok" id="fx-quality-badge" style="display:none">
+          <div class="sdot"></div><span id="fx-quality-text">LIVE</span>
+        </div>
+      </div>
+      <div class="filter-row" id="filter-row"></div>
+
+      <div class="rate-table-wrap">
+        <table class="rate-table">
+          <thead>
+            <tr>
+              <th data-i18n="th_rank">#</th>
+              <th data-i18n="th_country">国家/地区</th>
+              <th data-i18n="th_tier">层级</th>
+              <th data-i18n="th_currency">货币</th>
+              <th data-i18n="th_perUsd">1 USD =</th>
+              <th id="th-rate-header" data-i18n="th_perQuote">1 SOL =</th>
+              <th data-i18n="th_adapt">最优Web3业务</th>
+            </tr>
+          </thead>
+          <tbody id="rate-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="pagination"></div>
+
+      <!-- EACO TOP20 -->
+      <div class="top20-section">
+        <div class="section-header">
+          <div class="section-title">
+            <span data-i18n="top20Title">EACO 必选20大核心国家</span>
+            <span class="badge gold">EACO PRIORITY</span>
+          </div>
+        </div>
+        <div class="top20-grid" id="top20-grid"></div>
+      </div>
+
+      <!-- FOOTER -->
+      <footer class="footer">
+        <div class="footer-inner">
+          <div class="footer-links">
+            <a class="footer-link" href="https://orbmarkets.io/token/DqfoyZH96RnvZusSp3Cdncjpyp3C74ZmJzGhjmHnDHRH" target="_blank">Orbmarkets EACO</a>
+            <a class="footer-link" href="https://solscan.io/token/DqfoyZH96RnvZusSp3Cdncjpyp3C74ZmJzGhjmHnDHRH" target="_blank">Solscan</a>
+            <a class="footer-link" href="https://www.oklink.com/solana/token/DqfoyZH96RnvZusSp3Cdncjpyp3C74ZmJzGhjmHnDHRH" target="_blank">OKLink</a>
+            <a class="footer-link" href="https://explorer.solana.com" target="_blank">Solana Explorer</a>
+            <a class="footer-link" href="https://www.coingecko.com" target="_blank">CoinGecko API</a>
+          </div>
+          <div class="footer-copy">EACO Oracle Panel © 2026 · Solana · All data reference only</div>
+        </div>
+      </footer>
+
+    </div>
+  </div>
+
+<script>
+// =============================================================
+// CONSTANTS & CONFIG
+// =============================================================
+const UPDATE_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
+const CACHE_KEY = 'eaco50_cache';
+const SOL_COINGECKO_ID = 'solana';
+const eCNH_COINGECKO_ID = 'tether-yuan'; // fallback
+
+// Token CA addresses
+const TOKEN_CA = {
+  EACO:  'DqfoyZH96RnvZusSp3Cdncjpyp3C74ZmJzGhjmHnDHRH',
+  USDT:  'Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB',
+  USDC:  'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v',
+  eCNH:  '7GQnqthWKa5v2GqXYWhmgWZY5mCRrniwK3Xuinm9GKw5',
+  SOL:   'So11111111111111111111111111111111111111112',
+};
+
+// =============================================================
+// STATE
+// =============================================================
+let state = {
+  lang: 'zh',
+  quote: 'SOL',
+  filter: 'all',
+  page: 1,
+  pageSize: 20,
+  prices: {
+    SOL:   null,   // USD per SOL
+    USDT:  1.0,
+    USDC:  1.0,
+    eCNH:  null,   // USD per eCNH
+    EACO:  null,   // USD per EACO
+  },
+  // 24h change %
+  changes: {
+    SOL:   0,
+    USDT:  0,
+    USDC:  0,
+    eCNH:  0,
+    EACO:  0,
+  },
+  // Country FX rates (1 USD = X local currency)
+  fxRates: {},  // {countryCode: rate}
+  fxSource: {}, // {countryCode: 'live'|'sim'}
+  lastUpdate: null,  // timestamp
+  nextUpdate: null,  // timestamp
+  isLoading: false,
+  countdownSecs: 0,
+  countdownTimer: null,
+  updateTimer: null,
+};
+
+// =============================================================
+// 50 COUNTRIES DATA (base FX rates as fallback)
+// =============================================================
+// FX Rates as of 2026-07-19 · Source: Frankfurter API / Orbmarkets
+// usdRate = 1 USD = X local currency (updated with today's live data)
+const COUNTRIES_BASE = [
+  // ===== TIER 1 — Top Web3 Jurisdictions =====
+  {code:'SG',flag:'🇸🇬',name:'新加坡',nameEn:'Singapore',currency:'SGD',usdRate:1.3460,tier:1,adaptBiz:'合规CEX/稳定币/RWA/VC基金'},
+  {code:'AE',flag:'🇦🇪',name:'阿联酋',nameEn:'UAE',currency:'AED',usdRate:3.6730,tier:1,adaptBiz:'全球头部交易所/零售Web3/矿企/中东流量'},
+  {code:'CH',flag:'🇨🇭',name:'瑞士',nameEn:'Switzerland',currency:'CHF',usdRate:0.8880,tier:1,adaptBiz:'加密基金/家族办公室/机构托管/RWA'},
+  {code:'HK',flag:'🇭🇰',name:'中国香港',nameEn:'Hong Kong',currency:'HKD',usdRate:7.8050,tier:1,adaptBiz:'亚洲RWA/现货ETF/券商合规/面向内地'},
+  {code:'MT',flag:'🇲🇹',name:'马耳他',nameEn:'Malta',currency:'EUR',usdRate:0.9130,tier:1,adaptBiz:'欧盟CEX/DEX/跨境加密/MiCA通行证'},
+  {code:'GB',flag:'🇬🇧',name:'英国',nameEn:'United Kingdom',currency:'GBP',usdRate:0.7710,tier:1,adaptBiz:'Web3投行/加密衍生品/NFT/DAO合规'},
+  {code:'US',flag:'🇺🇸',name:'美国',nameEn:'United States',currency:'USD',usdRate:1.0000,tier:1,adaptBiz:'BTC现货ETF/对冲基金/美元稳定币/机构RWA'},
+  {code:'CA',flag:'🇨🇦',name:'加拿大',nameEn:'Canada',currency:'CAD',usdRate:1.3910,tier:1,adaptBiz:'北美合规交易所/现货ETF/托管/零售流量'},
+  {code:'PT',flag:'🇵🇹',name:'葡萄牙',nameEn:'Portugal',currency:'EUR',usdRate:0.9130,tier:1,adaptBiz:'个人持有免税/欧洲Web3/数字游民/NFT'},
+  {code:'IE',flag:'🇮🇪',name:'爱尔兰',nameEn:'Ireland',currency:'EUR',usdRate:0.9130,tier:1,adaptBiz:'跨国Web3欧洲总部/稳定币/跨境清算'},
+  {code:'EE',flag:'🇪🇪',name:'爱沙尼亚',nameEn:'Estonia',currency:'EUR',usdRate:0.9130,tier:1,adaptBiz:'低成本VASP/小型交易所/钱包/链上身份'},
+  {code:'DE',flag:'🇩🇪',name:'德国',nameEn:'Germany',currency:'EUR',usdRate:0.9130,tier:1,adaptBiz:'欧洲机构托管/长期持有免税/工业RWA'},
+  {code:'JP',flag:'🇯🇵',name:'日本',nameEn:'Japan',currency:'JPY',usdRate:154.500,tier:1,adaptBiz:'合规现货交易所/NFT/游戏Web3/日元稳定币'},
+  {code:'KY',flag:'🇰🇾',name:'开曼群岛',nameEn:'Cayman Islands',currency:'KYD',usdRate:0.8250,tier:1,adaptBiz:'Web3投资基金/DAO基金会/代币发行离岸'},
+  {code:'BM',flag:'🇧🇲',name:'百慕大',nameEn:'Bermuda',currency:'BMD',usdRate:1.0000,tier:1,adaptBiz:'稳定币发行/离岸托管/跨境支付RWA'},
+  {code:'CY',flag:'🇨🇾',name:'塞浦路斯',nameEn:'Cyprus',currency:'EUR',usdRate:0.9130,tier:1,adaptBiz:'中东-欧洲中转交易所/中小CEX/OTC'},
+  {code:'LU',flag:'🇱🇺',name:'卢森堡',nameEn:'Luxembourg',currency:'EUR',usdRate:0.9130,tier:1,adaptBiz:'欧盟资管/代币化基金/机构RWA/托管'},
+  {code:'AU',flag:'🇦🇺',name:'澳大利亚',nameEn:'Australia',currency:'AUD',usdRate:1.5290,tier:1,adaptBiz:'澳新合规交易所/加密汇款/NFT/稳定币'},
+  {code:'SV',flag:'🇸🇻',name:'萨尔瓦多',nameEn:'El Salvador',currency:'USD',usdRate:1.0000,tier:1,adaptBiz:'比特币法定/BTC挖矿/加密特区/零税负'},
+  {code:'BH',flag:'🇧🇭',name:'巴林',nameEn:'Bahrain',currency:'BHD',usdRate:0.3770,tier:1,adaptBiz:'中东Web3沙盒/海湾跨境汇款/本地项目'},
+  // ===== TIER 2 — Startup-Friendly =====
+  {code:'LT',flag:'🇱🇹',name:'立陶宛',nameEn:'Lithuania',currency:'EUR',usdRate:0.9130,tier:2,adaptBiz:'低成本MiCA/DEX/钱包服务商/OTC平台'},
+  {code:'GE',flag:'🇬🇪',name:'格鲁吉亚',nameEn:'Georgia',currency:'GEL',usdRate:2.6800,tier:2,adaptBiz:'低成本离岸/0资本利得税/挖矿/数字游民'},
+  {code:'ME',flag:'🇲🇪',name:'黑山',nameEn:'Montenegro',currency:'EUR',usdRate:0.9130,tier:2,adaptBiz:'小型CEX/NFT/离岸代币主体/低成本运营'},
+  {code:'ES',flag:'🇪🇸',name:'西班牙',nameEn:'Spain',currency:'EUR',usdRate:0.9130,tier:2,adaptBiz:'南欧零售Web3/NFT文创/元宇宙/拉美跨境'},
+  {code:'NL',flag:'🇳🇱',name:'荷兰',nameEn:'Netherlands',currency:'EUR',usdRate:0.9130,tier:2,adaptBiz:'欧洲Web3孵化器/DeFi/跨境支付/RWA不动'},
+  {code:'MY',flag:'🇲🇾',name:'马来西亚',nameEn:'Malaysia',currency:'MYR',usdRate:4.6750,tier:2,adaptBiz:'东南亚OTC/稳定币汇款/产业园/中小NFT'},
+  {code:'TH',flag:'🇹🇭',name:'泰国',nameEn:'Thailand',currency:'THB',usdRate:35.200,tier:2,adaptBiz:'东南亚零售交易所/GameFi/元宇宙/旅游RWA'},
+  {code:'VN',flag:'🇻🇳',name:'越南',nameEn:'Vietnam',currency:'VND',usdRate:24100,tier:2,adaptBiz:'Web3外包开发/链游/P2E/东南亚下沉流量'},
+  {code:'PH',flag:'🇵🇭',name:'菲律宾',nameEn:'Philippines',currency:'PHP',usdRate:57.300,tier:2,adaptBiz:'海外劳工汇款/小额支付/OTC/海岛RWA'},
+  {code:'BB',flag:'🇧🇧',name:'巴巴多斯',nameEn:'Barbados',currency:'BBD',usdRate:2.0000,tier:2,adaptBiz:'离岸稳定币/小型基金/代币主体/数字沙盒'},
+  {code:'PA',flag:'🇵🇦',name:'巴拿马',nameEn:'Panama',currency:'PAB',usdRate:1.0000,tier:2,adaptBiz:'拉美跨境支付/离岸Web3/实物RWA'},
+  {code:'MU',flag:'🇲🇺',name:'毛里求斯',nameEn:'Mauritius',currency:'MUR',usdRate:46.800,tier:2,adaptBiz:'非洲Web3总部/离岸交易所/非洲跨境汇款'},
+  {code:'VU',flag:'🇻🇺',name:'瓦努阿图',nameEn:'Vanuatu',currency:'VUV',usdRate:122.00,tier:2,adaptBiz:'极低门槛离岸主体/小型DAO/轻资产'},
+  {code:'NZ',flag:'🇳🇿',name:'新西兰',nameEn:'New Zealand',currency:'NZD',usdRate:1.5820,tier:2,adaptBiz:'澳新NFT/Web3文创/合规小型交易所'},
+  {code:'OM',flag:'🇴🇲',name:'阿曼',nameEn:'Oman',currency:'OMR',usdRate:0.3850,tier:2,adaptBiz:'中东中小Web3/跨境加密贸易/线下支付'},
+  // ===== TIER 3 — High-Growth Markets =====
+  {code:'AR',flag:'🇦🇷',name:'阿根廷',nameEn:'Argentina',currency:'ARS',usdRate:920.00,tier:3,adaptBiz:'稳定币汇款/DeFi/开发外包/拉美流量'},
+  {code:'BR',flag:'🇧🇷',name:'巴西',nameEn:'Brazil',currency:'BRL',usdRate:5.4200,tier:3,adaptBiz:'拉美大型零售交易所/NFT/GameFi/支付'},
+  {code:'UY',flag:'🇺🇾',name:'乌拉圭',nameEn:'Uruguay',currency:'UYU',usdRate:41.500,tier:3,adaptBiz:'拉美稳定币试点/中小RWA/低税持有'},
+  {code:'IN',flag:'🇮🇳',name:'印度',nameEn:'India',currency:'INR',usdRate:83.200,tier:3,adaptBiz:'全球第一开发外包/P2P/下沉流量/跨境汇款'},
+  {code:'TR',flag:'🇹🇷',name:'土耳其',nameEn:'Turkey',currency:'TRY',usdRate:30.500,tier:3,adaptBiz:'欧亚跨境/零售交易/线下支付/中东欧流量'},
+  {code:'NG',flag:'🇳🇬',name:'尼日利亚',nameEn:'Nigeria',currency:'NGN',usdRate:1480.0,tier:3,adaptBiz:'非洲本土交易所/稳定币汇款/GameFi/下沉'},
+  {code:'ZA',flag:'🇿🇦',name:'南非',nameEn:'South Africa',currency:'ZAR',usdRate:18.700,tier:3,adaptBiz:'非洲Web3总部/托管/跨境RWA/矿企'},
+  {code:'KE',flag:'🇰🇪',name:'肯尼亚',nameEn:'Kenya',currency:'KES',usdRate:142.00,tier:3,adaptBiz:'东非汇款/小额支付/P2P/本地Web3'},
+  {code:'KR',flag:'🇰🇷',name:'韩国',nameEn:'South Korea',currency:'KRW',usdRate:1385.0,tier:3,adaptBiz:'NFT/链游/元宇宙/韩流Web3文创'},
+  {code:'RU',flag:'🇷🇺',name:'俄罗斯',nameEn:'Russia',currency:'RUB',usdRate:78.780,tier:3,adaptBiz:'公链底层/挖矿/离岸技术团队/OTC'},
+  {code:'UA',flag:'🇺🇦',name:'乌克兰',nameEn:'Ukraine',currency:'UAH',usdRate:41.200,tier:3,adaptBiz:'远程开发/稳定币跨境/链游工作室'},
+  {code:'ID',flag:'🇮🇩',name:'印度尼西亚',nameEn:'Indonesia',currency:'IDR',usdRate:16250,tier:3,adaptBiz:'东南亚P2P/小额支付/群岛跨境汇款'},
+  {code:'CR',flag:'🇨🇷',name:'哥斯达黎加',nameEn:'Costa Rica',currency:'CRC',usdRate:538.00,tier:3,adaptBiz:'拉美海外工作室/轻资产离岸/开发主体'},
+  {code:'KG',flag:'🇰🇬',name:'吉尔吉斯斯坦',nameEn:'Kyrgyzstan',currency:'KGS',usdRate:89.500,tier:3,adaptBiz:'低成本挖矿/中亚跨境汇款/小型OTC'},
+  {code:'JO',flag:'🇯🇴',name:'约旦',nameEn:'Jordan',currency:'JOD',usdRate:0.7090,tier:3,adaptBiz:'中东民间交易/跨境汇款/中小Web3'},
+];
+
+const EACO_TOP20 = [
+  {rank:1,name:'阿联酋',biz:'全球运营总部/中东酒店RWA首发/EACOSWAP持牌',tier:'战略一级'},
+  {rank:2,name:'中国香港',biz:'亚太RWA发行/大中华资金/稳定币合规通道',tier:'战略一级'},
+  {rank:3,name:'新加坡',biz:'全球机构资管/高端RWA合规背书/多边互通',tier:'战略一级'},
+  {rank:4,name:'开曼群岛',biz:'DAO基金会/投资基金注册/代币发行离岸主体',tier:'离岸二级'},
+  {rank:5,name:'百慕大',biz:'现金流稳定币发行/海外资产离岸托管',tier:'离岸二级'},
+  {rank:6,name:'瑞士',biz:'欧美高净值资产/欧洲机构分销枢纽',tier:'离岸二级'},
+  {rank:7,name:'葡萄牙',biz:'欧洲平价酒店RWA/数字游民基地',tier:'区域落地'},
+  {rank:8,name:'马来西亚',biz:'东南亚口岸酒店/文旅地产代币化',tier:'区域落地'},
+  {rank:9,name:'泰国',biz:'东南亚旅游RWA/度假酒店资产/零售流量',tier:'区域落地'},
+  {rank:10,name:'萨尔瓦多',biz:'BTC原生支付/美洲酒店RWA试点',tier:'区域落地'},
+  {rank:11,name:'越南',biz:'技术开发/东南亚散户流量/DEX',tier:'流量市场'},
+  {rank:12,name:'印度',biz:'全球第一用户量/小额稳定币跨境支付',tier:'流量市场'},
+  {rank:13,name:'巴西',biz:'拉美RWA+零售流量双赛道',tier:'流量市场'},
+  {rank:14,name:'阿根廷',biz:'稳定币跨境汇款/拉美流量',tier:'流量市场'},
+  {rank:15,name:'尼日利亚',biz:'非洲市场核心/美元短缺链上结算',tier:'流量市场'},
+  {rank:16,name:'土耳其',biz:'欧亚跨境稳定币/民间OTC流量',tier:'流量市场'},
+  {rank:17,name:'菲律宾',biz:'海外劳工汇款/海岛酒店RWA+跨境',tier:'流量市场'},
+  {rank:18,name:'韩国',biz:'NFT/文旅RWA/东亚年轻散户流量',tier:'流量市场'},
+  {rank:19,name:'爱沙尼亚',biz:'低成本MiCA牌照/欧洲DEX分支',tier:'低成本配套'},
+  {rank:20,name:'格鲁吉亚',biz:'0资本利得税/远程技术团队/算力节点',tier:'低成本配套'},
+];
+
+// =============================================================
+// I18N
+// =============================================================
+const I18N = {
+  zh: {
+    title:'EACO 50国预言机汇率', subtitle:'Solana Chain · FX Oracle · 实时参考汇率',
+    quote:'基准', coreTokens:'核心代币实时价格', updated:'更新于',
+    fxPanel:'50国外贸汇率面板',
+    th_rank:'#', th_country:'国家/地区', th_tier:'层级', th_currency:'货币',
+    th_perUsd:'1 USD =', th_perQuote:'1 SOL =', th_adapt:'最优Web3业务',
+    top20Title:'EACO 必选20大核心国家',
+    risk1:'EACO代币当前流动性不足，DEX交易滑点较大，链上预言机报价≠真实成交价格，仅作估值参考；',
+    risk2:'面板汇率为外贸结算中间价，银行/OTC/加密出入金渠道存在买卖点差，实际兑换成本高于面板数值；',
+    risk3:'数据每30分钟批量同步，极端行情存在最高30分钟价格滞后；',
+    risk4:'数据仅供EACO项目测算、RWA资产估值参考，不构成任何投资交易建议。',
+    filterAll:'全部', filterTier1:'Tier1 顶级', filterTier2:'Tier2 创业', filterTier3:'Tier3 流量',
+    statCountries:'覆盖国家', statUpdates:'更新频率', statLast:'最后更新', statQuality:'数据质量',
+    page:'第', pageOf:'页，共', nextUpdate:'下次更新', lastUpdate:'上次更新', refreshNow:'🔄 立即刷新',
+    perSol:'1 SOL =', perUsdt:'1 USDT =', perUsdc:'1 USDC =', perEcnh:'1 eCNH =', perEaco:'1 EACO =',
+    USD_RATE:'美元参考价', SOL_RATE:'SOL单价(USD)', EACO_RATE:'EACO单价(USD)', ECNH_RATE:'eCNH单价(USD)',
+    tier1_full:'Tier1', tier2_full:'Tier2', tier3_full:'Tier3',
+    dataLive:'实时', dataSim:'模拟', oracleSync:'同步中…', oracleLive:'实时预言机', oracleStale:'数据过期',
+    oracleOffline:'离线模式', syncingData:'正在同步数据…',
+  },
+  en: {
+    title:'EACO 50-Country FX Oracle', subtitle:'Solana Chain · FX Oracle · Real-time Reference',
+    quote:'Quote', coreTokens:'Core Token Prices', updated:'Updated',
+    fxPanel:'50-Country FX Rate Panel',
+    th_rank:'#', th_country:'Country', th_tier:'Tier', th_currency:'Currency',
+    th_perUsd:'1 USD =', th_perQuote:'1 SOL =', th_adapt:'Best Web3 Fit',
+    top20Title:'EACO Priority 20 Core Countries',
+    risk1:'EACO liquidity insufficient, DEX slippage significant, oracle ≠ actual price;',
+    risk2:'Rates are interbank mid-market; bank/OTC/crypto spreads apply;',
+    risk3:'Data syncs every 30min; extreme volatility may cause up to 30min delay;',
+    risk4:'Data for EACO estimation and RWA valuation only, not investment advice.',
+    filterAll:'All', filterTier1:'Tier1 Top', filterTier2:'Tier2 Startup', filterTier3:'Tier3 Growth',
+    statCountries:'Countries', statUpdates:'Update Freq', statLast:'Last Update', statQuality:'Data Quality',
+    page:'Page', pageOf:'of', nextUpdate:'Next update', lastUpdate:'Last update', refreshNow:'🔄 Refresh',
+    perSol:'1 SOL =', perUsdt:'1 USDT =', perUsdc:'1 USDC =', perEcnh:'1 eCNH =', perEaco:'1 EACO =',
+    USD_RATE:'USD Ref', SOL_RATE:'SOL/USD', EACO_RATE:'EACO/USD', ECNH_RATE:'eCNH/USD',
+    tier1_full:'Tier1', tier2_full:'Tier2', tier3_full:'Tier3',
+    dataLive:'LIVE', dataSim:'SIM', oracleSync:'SYNCING…', oracleLive:'ORACLE LIVE', oracleStale:'DATA STALE',
+    oracleOffline:'OFFLINE', syncingData:'Syncing data…',
+  },
+  fr: {
+    title:'EACO Oracle FX 50 Pays', subtitle:'Chaîne Solana · Oracle FX · Taux de référence',
+    quote:'Devise', coreTokens:'Prix des jetons', updated:'Mis à jour',
+    fxPanel:'Tableau des taux 50 pays',
+    th_rank:'#', th_country:'Pays', th_tier:'Niveau', th_currency:'Devise',
+    th_perUsd:'1 USD =', th_perQuote:'1 SOL =', th_adapt:'Meilleur Web3',
+    top20Title:'20 pays prioritaires EACO',
+    risk1:'Liquidité insuffisante EACO, slippage DEX important;',
+    risk2:'Taux interbancaires ; spreads banca/OTC/crypto ;',
+    risk3:'Synchronisation toutes les 30 min ;',
+    risk4:'Données pour estimation EACO et valorisation RWA uniquement.',
+    filterAll:'Tous', filterTier1:'Tier1 Top', filterTier2:'Tier2', filterTier3:'Tier3',
+    statCountries:'Pays', statUpdates:'Fréq.', statLast:'Dernière MAJ', statQuality:'Qualité données',
+    page:'Page', pageOf:'sur', nextUpdate:'Prochaine MAJ', lastUpdate:'Dernière MAJ', refreshNow:'🔄 MAJ',
+    perSol:'1 SOL =', perUsdt:'1 USDT =', perUsdc:'1 USDC =', perEcnh:'1 eCNH =', perEaco:'1 EACO =',
+    USD_RATE:'Réf. USD', SOL_RATE:'SOL/USD', EACO_RATE:'EACO/USD', ECNH_RATE:'eCNH/USD',
+    tier1_full:'Tier1', tier2_full:'Tier2', tier3_full:'Tier3',
+    dataLive:'EN DIRECT', dataSim:'SIM', oracleSync:'SYNC…', oracleLive:'ORACLE EN DIRECT', oracleStale:'DONNÉES PÉRIM.',
+    oracleOffline:'HORS LIGNE', syncingData:'Synchronisation…',
+  },
+  ru: {
+    title:'EACO Oracle FX 50 Стран', subtitle:'Сеть Solana · Oracle FX · Ставки 50 стран',
+    quote:'Котировка', coreTokens:'Курсы токенов', updated:'Обновлено',
+    fxPanel:'Таблица курсов 50 стран',
+    th_rank:'#', th_country:'Страна', th_tier:'Уровень', th_currency:'Валюта',
+    th_perUsd:'1 USD =', th_perQuote:'1 SOL =', th_adapt:'Лучший Web3',
+    top20Title:'Топ-20 приоритетных стран EACO',
+    risk1:'Недостаточная ликвидность EACO, значительное проскальзывание DEX;',
+    risk2:'Межбанковские курсы ; спреды ;',
+    risk3:'Синхронизация каждые 30 мин ;',
+    risk4:'Данные только для оценки EACO и RWA.',
+    filterAll:'Все', filterTier1:'Уровень 1', filterTier2:'Уровень 2', filterTier3:'Уровень 3',
+    statCountries:'Страны', statUpdates:'Частота', statLast:'Обновлено', statQuality:'Качество данных',
+    page:'Страница', pageOf:'из', nextUpdate:'Следующее', lastUpdate:'Последнее', refreshNow:'🔄 Обновить',
+    perSol:'1 SOL =', perUsdt:'1 USDT =', perUsdc:'1 USDC =', perEcnh:'1 eCNH =', perEaco:'1 EACO =',
+    USD_RATE:'Курс USD', SOL_RATE:'SOL/USD', EACO_RATE:'EACO/USD', ECNH_RATE:'eCNH/USD',
+    tier1_full:'Ур.1', tier2_full:'Ур.2', tier3_full:'Ур.3',
+    dataLive:'ОНЛАЙН', dataSim:'СИМ', oracleSync:'СИНХР…', oracleLive:'ORACLE ONLINE', oracleStale:'ДАННЫЕ УСТАРЕЛИ',
+    oracleOffline:'НЕТ СЕТИ', syncingData:'Синхронизация…',
+  },
+  es: {
+    title:'EACO Oracle FX 50 Países', subtitle:'Cadena Solana · Oracle FX · Tasas 50 países',
+    quote:'Referencia', coreTokens:'Precios de tokens', updated:'Actualizado',
+    fxPanel:'Panel de tasas 50 países',
+    th_rank:'#', th_country:'País', th_tier:'Nivel', th_currency:'Moneda',
+    th_perUsd:'1 USD =', th_perQuote:'1 SOL =', th_adapt:'Mejor Web3',
+    top20Title:'Top 20 países prioritarios EACO',
+    risk1:'Liquidez insuficiente EACO, slippage DEX alto;',
+    risk2:'Tasas interbancarias ; spreads ;',
+    risk3:'Sincronización cada 30 min ;',
+    risk4:'Datos para estimación EACO y valoración RWA únicamente.',
+    filterAll:'Todos', filterTier1:'Nivel 1', filterTier2:'Nivel 2', filterTier3:'Nivel 3',
+    statCountries:'Países', statUpdates:'Frecuencia', statLast:'Última actual.', statQuality:'Calidad datos',
+    page:'Página', pageOf:'de', nextUpdate:'Próxima actual.', lastUpdate:'Última actual.', refreshNow:'🔄 Actualizar',
+    perSol:'1 SOL =', perUsdt:'1 USDT =', perUsdc:'1 USDC =', perEcnh:'1 eCNH =', perEaco:'1 EACO =',
+    USD_RATE:'Ref. USD', SOL_RATE:'SOL/USD', EACO_RATE:'EACO/USD', ECNH_RATE:'eCNH/USD',
+    tier1_full:'Nv1', tier2_full:'Nv2', tier3_full:'Nv3',
+    dataLive:'EN VIVO', dataSim:'SIM', oracleSync:'SYNC…', oracleLive:'ORACLE EN VIVO', oracleStale:'DATOS VENCIDOS',
+    oracleOffline:'SIN CONEXIÓN', syncingData:'Sincronizando…',
+  },
+  ar: {
+    title:'EACO تنبؤ أسعار الصرف 50 دولة', subtitle:'سلسلة Solana · أوراكل FX · أسعار 50 دولة',
+    quote:'المرجع', coreTokens:'أسعار العملات الرقمية', updated:'آخر تحديث',
+    fxPanel:'لوحة أسعار 50 دولة',
+    th_rank:'#', th_country:'الدولة', th_tier:'المستوى', th_currency:'العملة',
+    th_perUsd:'1 دولار =', th_perQuote:'1 SOL =', th_adapt:'أفضل Web3',
+    top20Title:'أهم 20 دولة لـ EACO',
+    risk1:'سيولة EACO غير كافية، انزلاق DEX مرتفع؛',
+    risk2:'أسعار بين البنوك؛ فروق أسعار؛',
+    risk3:'مزامنة كل 30 دقيقة؛',
+    risk4:'البيانات للتقدير فقط.',
+    filterAll:'الكل', filterTier1:'المستوى 1', filterTier2:'المستوى 2', filterTier3:'المستوى 3',
+    statCountries:'الدول', statUpdates:'التحديث', statLast:'آخر تحديث', statQuality:'جودة البيانات',
+    page:'صفحة', pageOf:'من', nextUpdate:'التحديث التالي', lastUpdate:'آخر تحديث', refreshNow:'🔄 تحديث',
+    perSol:'1 SOL =', perUsdt:'1 USDT =', perUsdc:'1 USDC =', perEcnh:'1 eCNH =', perEaco:'1 EACO =',
+    USD_RATE:'سعر USD', SOL_RATE:'SOL/USD', EACO_RATE:'EACO/USD', ECNH_RATE:'eCNH/USD',
+    tier1_full:'م1', tier2_full:'م2', tier3_full:'م3',
+    dataLive:'مباشر', dataSim:'محاكاة', oracleSync:'جارٍ المزامنة…', oracleLive:'أوراكل مباشر', oracleStale:'بيانات قديمة',
+    oracleOffline:'غير متصل', syncingData:'جارٍ المزامنة…',
+  },
+};
+
+function tx(key) { return I18N[state.lang]?.[key] ?? I18N['en'][key] ?? key; }
+
+// =============================================================
+// API LAYER
+// =============================================================
+
+// Fetch SOL price from CoinGecko (free, no API key)
+async function fetchSOLPrice() {
+  try {
+    const resp = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=solana&vs_currencies=usd&include_24hr_change=true`,
+      { method: 'GET', headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(8000) }
+    );
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (data && data.solana) {
+      return {
+        price: data.solana.usd,
+        change24h: data.solana.usd_24h_change ?? 0,
+        source: 'coingecko',
+      };
+    }
+  } catch(e) { console.warn('CoinGecko SOL fetch failed:', e.message); }
+  return null;
+}
+
+// Fetch eCNH price (Tether Yuan on Solana) - use fallback estimate
+async function fetchECNHPrice() {
+  try {
+    // Try CoinGecko for USDT CNY price (approximates eCNH)
+    const resp = await fetch(
+      `https://api.coingecko.com/api/v3/simple/price?ids=tether-yuan,tether&vs_currencies=usd&include_24hr_change=true`,
+      { method: 'GET', headers: { 'Accept': 'application/json' }, signal: AbortSignal.timeout(8000) }
+    );
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    // eCNH should be ~1 USD but pegged to CNY
+    // CNY/USD is approximately 0.137 (1 CNY = 0.137 USD)
+    if (data && data.tether_yuan) {
+      return { price: data.tether_yuan.usd ?? (1/7.3), change24h: data.tether_yuan.usd_24h_change ?? 0, source: 'coingecko' };
+    }
+    // fallback: use CNY rate approximation
+    const cnyResp = await fetch(
+      `https://api.frankfurter.app/latest?from=CNY&to=USD`,
+      { method: 'GET', signal: AbortSignal.timeout(5000) }
+    );
+    if (cnyResp.ok) {
+      const cnyData = await cnyResp.json();
+      const cnyPerUsd = cnyData.rates?.USD;
+      if (cnyPerUsd) return { price: 1/cnyPerUsd, change24h: 0, source: 'frankfurter' };
+    }
+  } catch(e) { console.warn('eCNH fetch failed:', e.message); }
+  return null;
+}
+
+// Fetch EACO price from Orbmarkets (public data)
+async function fetchEACOPrice() {
+  try {
+    // Orbmarkets public token page - try their API
+    const resp = await fetch(
+      `https://api.orbmarkets.io/v2/public/tokens/DqfoyZH96RnvZusSp3Cdncjpyp3C74ZmJzGhjmHnDHRH/price`,
+      { method: 'GET', signal: AbortSignal.timeout(6000) }
+    );
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.price !== undefined) return { price: parseFloat(data.price), change24h: 0, source: 'orbmarkets' };
+    }
+  } catch(e) { console.warn('Orbmarkets EACO fetch failed:', e.message); }
+  // Fallback: try Jupiter price API (Solana DEX aggregator)
+  try {
+    const jupResp = await fetch(
+      `https://api.jup.ag/price/v2?ids=SOL,DqfoyZH96RnvZusSp3Cdncjpyp3C74ZmJzGhjmHnDHRH`,
+      { method: 'GET', signal: AbortSignal.timeout(6000) }
+    );
+    if (jupResp.ok) {
+      const jData = await jupResp.json();
+      const eacoData = jData.data?.DqfoyZH96RnvZusSp3Cdncjpyp3C74ZmJzGhjmHnDHRH;
+      if (eacoData) {
+        return {
+          price: parseFloat(eacoData.price),
+          change24h: 0,
+          source: 'jupiter',
+        };
+      }
+    }
+  } catch(e) { console.warn('Jupiter EACO fetch failed:', e.message); }
+  return null;
+}
+
+// Fetch FX rates from Frankfurter API (free, no key, 50+ currencies)
+async function fetchFXRates() {
+  const result = {};
+  try {
+    // Get USD base rates from Frankfurter (EUR base)
+    const resp = await fetch(
+      `https://api.frankfurter.app/latest?from=USD`,
+      { method: 'GET', signal: AbortSignal.timeout(8000) }
+    );
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.rates) {
+        // Frankfurter gives EUR rates, we need USD
+        // EUR/USD = data.rates.USD (should be ~1.08), but it's from USD base so it's inverted
+        // Actually: from=USD gives how many EUR per 1 USD
+        // So 1 USD = data.rates.EUR EUR
+        const usdPerEur = data.rates.EUR || 0.876;
+        result.USD = 1;
+        for (const [code, eurRate] of Object.entries(data.rates)) {
+          result[code] = eurRate; // this is EUR per X, but we want USD per X
+          // Actually frankfurter with from=USD gives X per USD
+        }
+        // Mark as live
+        for (const key of Object.keys(result)) {
+          state.fxSource[key] = 'live';
+        }
+        return result;
+      }
+    }
+  } catch(e) { console.warn('Frankfurter FX fetch failed:', e.message); }
+  return null;
+}
+
+// Fetch live FX rates from multiple free sources and merge
+async function fetchLiveFXRates() {
+  // Try frankfurter first (free, reliable)
+  const fxData = await fetchFXRates();
+  if (fxData && Object.keys(fxData).length > 10) return fxData;
+  // Fallback: use frankfurter with specific currency list
+  try {
+    const symbols = ['SGD','AED','CHF','HKD','GBP','CAD','JPY','AUD','BHD','MYR','THB','VND','PHP','NZD','ZAR','KRW','INR','BRL','ARS','TRY','NGN','IDR','RUB','UAH','PLN','SEK','NOK','DKK','CZK','HUF','ILS','RON','BGN','HRK','TRY','MXN','CLP','COP','PEN'];
+    const resp = await fetch(
+      `https://api.frankfurter.app/latest?from=USD&to=${symbols.join(',')}`,
+      { method: 'GET', signal: AbortSignal.timeout(10000) }
+    );
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.rates) {
+        const result = { USD: 1, ...data.rates };
+        for (const key of Object.keys(result)) state.fxSource[key] = 'live';
+        return result;
+      }
+    }
+  } catch(e) { console.warn('Frankfurter specific FX failed:', e.message); }
+  return null;
+}
+
+// =============================================================
+// MAIN ORACLE SYNC
+// =============================================================
+async function syncOracleData() {
+  if (state.isLoading) return;
+  state.isLoading = true;
+  setOracleUI('loading');
+
+  const now = Date.now();
+  const results = { sol: null, eaco: null, ecnh: null, fx: null };
+
+  // Fetch all data in parallel
+  const [sol, eaco, ecnh, fx] = await Promise.all([
+    fetchSOLPrice(),
+    fetchEACOPrice(),
+    fetchECNHPrice(),
+    fetchLiveFXRates(),
+  ]);
+
+  // Update state
+  if (sol) {
+    state.prices.SOL = sol.price;
+    state.changes.SOL = sol.change24h;
+    setBadge('badge-sol', 'ok', `SOL/USD · ${sol.source.toUpperCase()}`);
+  } else {
+    state.prices.SOL = state.prices.SOL ?? 76.29; // ORBMARKETS LIVE · fallback
+    state.changes.SOL = 0;
+    setBadge('badge-sol', 'warn', 'SOL/USD · FALLBACK');
+  }
+
+  if (eaco) {
+    state.prices.EACO = eaco.price;
+    state.changes.EACO = eaco.change24h;
+    setBadge('badge-eaco', 'ok', `EACO/USD · ${eaco.source.toUpperCase()}`);
+  } else {
+    state.prices.EACO = state.prices.EACO ?? 0.00002523; // ORBMARKETS LIVE · https://orbmarkets.io/token/DqfoyZH96RnvZusSp3Cdncjpyp3C74ZmJzGhjmHnDHRH
+    state.changes.EACO = 0;
+    setBadge('badge-eaco', 'warn', 'EACO/USD · SIMULATED');
+  }
+
+  if (ecnh) {
+    state.prices.eCNH = ecnh.price;
+    state.changes.eCNH = ecnh.change24h;
+    setBadge('badge-ecnh', 'ok', `eCNH/USD · ${ecnh.source.toUpperCase()}`);
+  } else {
+    // Estimate eCNH: ~1 CNY = 0.137 USD (rough estimate)
+    state.prices.eCNH = state.prices.eCNH ?? 0.1369; // Approx CNY/USD
+    state.changes.eCNH = 0;
+    setBadge('badge-ecnh', 'warn', 'eCNH/USD · ESTIMATED');
+  }
+
+  if (fx) {
+    // Merge live FX into base data
+    for (const country of COUNTRIES_BASE) {
+      const live = fx[country.currency];
+      if (live !== undefined) {
+        country.usdRate = live;
+        state.fxRates[country.code] = live;
+        state.fxSource[country.code] = 'live';
+      } else {
+        state.fxRates[country.code] = country.usdRate;
+        state.fxSource[country.code] = 'sim';
+      }
+    }
+    setBadge('badge-fx', 'ok', `FX · FRANKFURTER LIVE`);
+  } else {
+    // Use base data
+    for (const country of COUNTRIES_BASE) {
+      state.fxRates[country.code] = country.usdRate;
+      state.fxSource[country.code] = 'sim';
+    }
+    setBadge('badge-fx', 'warn', 'FX · SIMULATED');
+  }
+
+  // USDT/USDC always = 1
+  state.prices.USDT = 1.0;
+  state.prices.USDC = 1.0;
+  state.changes.USDT = 0;
+  state.changes.USDC = 0;
+
+  // Update timestamps
+  state.lastUpdate = now;
+  state.nextUpdate = now + UPDATE_INTERVAL_MS;
+
+  // Save to localStorage cache
+  saveCache();
+
+  // Update UI
+  state.isLoading = false;
+  setOracleUI('live');
+  renderAll();
+}
+
+// =============================================================
+// CACHE
+// =============================================================
+function saveCache() {
+  try {
+    const cacheData = {
+      prices: state.prices,
+      changes: state.changes,
+      fxRates: state.fxRates,
+      fxSource: state.fxSource,
+      lastUpdate: state.lastUpdate,
+      version: 1,
+    };
+    localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+  } catch(e) {}
+}
+
+function loadCache() {
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!data.version || !data.lastUpdate) return null;
+    // Cache valid for 2 hours
+    if (Date.now() - data.lastUpdate > 2 * 60 * 60 * 1000) return null;
+    return data;
+  } catch(e) { return null; }
+}
+
+function restoreFromCache() {
+  const cache = loadCache();
+  if (cache) {
+    state.prices = { ...state.prices, ...cache.prices };
+    state.changes = { ...state.changes, ...cache.changes };
+    state.fxRates = cache.fxRates;
+    state.fxSource = cache.fxSource || {};
+    state.lastUpdate = cache.lastUpdate;
+    state.nextUpdate = state.lastUpdate + UPDATE_INTERVAL_MS;
+    // Mark badges based on source
+    for (const code of Object.keys(state.fxSource)) {
+      if (state.fxSource[code] === 'live') {
+        if (['SGD','EUR','GBP','JPY','CHF'].includes(code)) setBadge('badge-fx', 'ok', 'FX · CACHED');
+      }
+    }
+    if (state.prices.SOL) setBadge('badge-sol', 'ok', 'SOL/USD · CACHED');
+    if (state.prices.EACO) setBadge('badge-eaco', 'warn', 'EACO/USD · CACHED');
+    return true;
+  }
+  return false;
+}
+
+// =============================================================
+// UI HELPERS
+// =============================================================
+function setOracleUI(mode) {
+  const dot = document.getElementById('oracle-dot');
+  const label = document.getElementById('oracle-label');
+  const meta = document.getElementById('oracle-meta');
+  if (mode === 'loading') {
+    dot.className = 'oracle-dot yellow';
+    label.textContent = tx('oracleSync');
+    meta.textContent = tx('syncingData');
+    document.getElementById('refresh-spinner').classList.add('show');
+    document.getElementById('refresh-btn-text').textContent = tx('syncingData');
+  } else if (mode === 'live') {
+    dot.className = 'oracle-dot green';
+    label.textContent = tx('oracleLive');
+    const age = getAgeText(state.lastUpdate);
+    meta.textContent = age;
+    document.getElementById('refresh-spinner').classList.remove('show');
+    document.getElementById('refresh-btn-text').textContent = tx('refreshNow');
+    document.getElementById('refresh-btn').disabled = false;
+  } else if (mode === 'stale') {
+    dot.className = 'oracle-dot red';
+    label.textContent = tx('oracleStale');
+    meta.textContent = tx('oracleOffline');
+  }
+}
+
+function setBadge(id, cls, text) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.className = `source-badge ${cls}`;
+  el.innerHTML = `<div class="sdot"></div>${text}`;
+}
+
+function getAgeText(ts) {
+  if (!ts) return '—';
+  const secs = Math.floor((Date.now() - ts) / 1000);
+  if (secs < 60) return `${secs}s ago`;
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  return `${hours}h ago`;
+}
+
+function fmt(n, d = 4) {
+  if (n === undefined || n === null || isNaN(n)) return '—';
+  if (Math.abs(n) >= 10000) return n.toLocaleString('en-US', {maximumFractionDigits:2});
+  if (Math.abs(n) < 0.00001) return n.toExponential(4);
+  return n.toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:d});
+}
+
+function fmtChange(n) {
+  if (n === undefined || n === null) return '';
+  const sign = n >= 0 ? '+' : '';
+  return `${sign}${n.toFixed(2)}%`;
+}
+
+function getCountryRate(country) {
+  const fx = state.fxRates[country.code];
+  return fx ?? country.usdRate;
+}
+
+// =============================================================
+// COUNTDOWN TIMER
+// =============================================================
+function startCountdown() {
+  if (state.countdownTimer) clearInterval(state.countdownTimer);
+  updateCountdown();
+  state.countdownTimer = setInterval(updateCountdown, 1000);
+}
+
+function updateCountdown() {
+  if (!state.nextUpdate) return;
+  const remaining = Math.max(0, state.nextUpdate - Date.now());
+  const secs = Math.ceil(remaining / 1000);
+  const m = Math.floor(secs / 60);
+  const s = secs % 60;
+  const display = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+  document.getElementById('countdown-display').textContent = display;
+
+  // Update last-update display
+  const lastEl = document.getElementById('last-update-display');
+  if (lastEl && state.lastUpdate) {
+    const d = new Date(state.lastUpdate);
+    lastEl.textContent = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}:${d.getSeconds().toString().padStart(2,'0')}`;
+  }
+}
+
+// =============================================================
+// MANUAL REFRESH
+// =============================================================
+async function manualRefresh() {
+  await syncOracleData();
+}
+
+// =============================================================
+// MAIN RENDER
+// =============================================================
+function renderAll() {
+  renderOracleMeta();
+  renderStats();
+  renderTokens();
+  renderWarning();
+  renderFilters();
+  renderTable();
+  renderPagination();
+  renderTop20();
+  renderTicker();
+  updateTime();
+}
+
+function renderOracleMeta() {
+  const age = getAgeText(state.lastUpdate);
+  document.getElementById('oracle-meta').textContent = age;
+}
+
+function renderStats() {
+  const container = document.getElementById('stats-row');
+  const pSol = state.prices.SOL;
+  const pEaco = state.prices.EACO;
+  const liveCount = Object.values(state.fxSource).filter(s => s === 'live').length;
+  const totalCount = COUNTRIES_BASE.length;
+  const quality = liveCount / totalCount;
+  const qualityLabel = quality > 0.8 ? 'LIVE (>80%)' : (quality > 0.3 ? 'MIXED' : 'SIMULATED');
+  const qualityColor = quality > 0.8 ? 'color:var(--green)' : (quality > 0.3 ? 'color:var(--yellow)' : 'color:var(--red)');
+
+  container.innerHTML = `
+    <div class="stat-card blue">
+      <div class="stat-label">SOL/USD</div>
+      <div class="stat-value accent">$${fmt(pSol, 2)}</div>
+      <div class="stat-sub">${fmtChange(state.changes.SOL)} 24h</div>
+    </div>
+    <div class="stat-card gold">
+      <div class="stat-label">EACO/USD</div>
+      <div class="stat-value gold">${pEaco ? '$' + fmt(pEaco, 8) : '—'}</div>
+      <div class="stat-sub">${fmtChange(state.changes.EACO)} 24h</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">${tx('statCountries')}</div>
+      <div class="stat-value">50</div>
+      <div class="stat-sub" style="${qualityColor}">${qualityLabel}</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">${tx('statUpdates')}</div>
+      <div class="stat-value">30m</div>
+      <div class="stat-sub">Solana Oracle Cycle</div>
+    </div>
+  `;
+}
+
+function renderTokens() {
+  const container = document.getElementById('token-cards');
+  const tokens = [
+    { key: 'EACO',  name: 'EACO', ca: TOKEN_CA.EACO, type: 'eaco',
+      explorers: [
+        { name: 'Orbmarkets', url: 'https://orbmarkets.io/token/' + TOKEN_CA.EACO },
+        { name: 'Solscan', url: 'https://solscan.io/token/' + TOKEN_CA.EACO },
+        { name: 'OKLink', url: 'https://www.oklink.com/solana/token/' + TOKEN_CA.EACO },
+        { name: 'Solana FM', url: 'https://solana.fm/address/' + TOKEN_CA.EACO },
+      ]
+    },
+    { key: 'SOL',   name: 'SOL',  ca: TOKEN_CA.SOL, type: 'sol',
+      explorers: [
+        { name: 'Solscan', url: 'https://solscan.io/token/' + TOKEN_CA.SOL },
+        { name: 'Solana Explorer', url: 'https://explorer.solana.com' },
+        { name: 'CoinGecko', url: 'https://www.coingecko.com/en/coins/solana' },
+      ]
+    },
+    { key: 'USDT', name: 'USDT', ca: TOKEN_CA.USDT, type: 'usdt',
+      explorers: [
+        { name: 'Solscan', url: 'https://solscan.io/token/' + TOKEN_CA.USDT },
+        { name: 'OKLink', url: 'https://www.oklink.com/solana/token/' + TOKEN_CA.USDT },
+      ]
+    },
+    { key: 'USDC', name: 'USDC', ca: TOKEN_CA.USDC, type: 'usdc',
+      explorers: [
+        { name: 'Solscan', url: 'https://solscan.io/token/' + TOKEN_CA.USDC },
+        { name: 'OKLink', url: 'https://www.oklink.com/solana/token/' + TOKEN_CA.USDC },
+      ]
+    },
+    { key: 'eCNH', name: 'eCNH', ca: TOKEN_CA.eCNH, type: 'ecnh',
+      explorers: [
+        { name: 'Orbmarkets', url: 'https://orbmarkets.io/token/' + TOKEN_CA.eCNH },
+        { name: 'Solscan', url: 'https://solscan.io/token/' + TOKEN_CA.eCNH },
+        { name: 'OKLink', url: 'https://www.oklink.com/solana/token/' + TOKEN_CA.eCNH },
+      ]
+    },
+  ];
+
+  container.innerHTML = tokens.map(tok => {
+    const price = state.prices[tok.key];
+    const change = state.changes[tok.key] ?? 0;
+    const priceStr = tok.key === 'EACO' ? fmt(price, 8) : (tok.key === 'SOL' ? fmt(price, 2) : fmt(price, 4));
+    const priceColor = tok.key === 'EACO' ? '#f59e0b' : (tok.key === 'SOL' ? '#9945ff' : '#26a17b');
+    const chClass = change >= 0 ? 'up' : 'dn';
+    return `<div class="token-card" onclick="window.open('${tok.explorers[0].url}','_blank')">
+      <div class="token-header">
+        <div class="token-icon ${tok.type}">${tok.key === 'SOL' ? '◎' : tok.key === 'EACO' ? '🏆' : tok.key === 'USDT' ? '💲' : tok.key === 'USDC' ? '💳' : '¥'}</div>
+        <div class="token-info">
+          <h3>${tok.name}</h3>
+          <p>${tok.ca.substring(0,18)}…</p>
+        </div>
+      </div>
+      <div class="token-price-row">
+        <div class="token-price" style="color:${priceColor}">$${priceStr}</div>
+        ${tok.key !== 'USDT' && tok.key !== 'USDC' ? `<div class="token-change ${chClass}">${fmtChange(change)}</div>` : ''}
+      </div>
+      <div class="token-links">
+        ${tok.explorers.slice(0,3).map(e => `<a class="token-link" href="${e.url}" target="_blank" onclick="event.stopPropagation()">${e.name}</a>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderWarning() {
+  document.getElementById('warning-text').innerHTML =
+    `<strong>⚠️ 风险提示 </strong>${tx('risk1')} ${tx('risk2')} ${tx('risk3')} ${tx('risk4')}`;
+}
+
+function renderFilters() {
+  const container = document.getElementById('filter-row');
+  const filters = [
+    {key:'all', label: tx('filterAll')},
+    {key:'tier1', label: tx('filterTier1')},
+    {key:'tier2', label: tx('filterTier2')},
+    {key:'tier3', label: tx('filterTier3')},
+  ];
+  container.innerHTML = filters.map(f => {
+    const cls = state.filter === f.key ? 'filter-btn active' : 'filter-btn';
+    return `<button class="${cls}" data-filter="${f.key}" onclick="setFilter('${f.key}')">${f.label}</button>`;
+  }).join('');
+}
+
+function getFilteredCountries() {
+  if (state.filter === 'all') return COUNTRIES_BASE;
+  if (state.filter === 'tier1') return COUNTRIES_BASE.filter(c => c.tier === 1);
+  if (state.filter === 'tier2') return COUNTRIES_BASE.filter(c => c.tier === 2);
+  if (state.filter === 'tier3') return COUNTRIES_BASE.filter(c => c.tier === 3);
+  return COUNTRIES_BASE;
+}
+
+function renderTable() {
+  const tbody = document.getElementById('rate-tbody');
+  const filtered = getFilteredCountries();
+  const start = (state.page - 1) * state.pageSize;
+  const page = filtered.slice(start, start + state.pageSize);
+
+  const quoteLabels = {SOL: tx('perSol'), USDT: tx('perUsdt'), USDC: tx('perUsdc'), eCNH: tx('perEcnh'), EACO: tx('perEaco')};
+  const thEl = document.getElementById('th-rate-header');
+  if (thEl) thEl.textContent = quoteLabels[state.quote] || '1 SOL =';
+
+  const pQuote = state.prices[state.quote] ?? 1;
+
+  tbody.innerHTML = page.map((c, i) => {
+    const globalIdx = start + i + 1;
+    const fxRate = getCountryRate(c);
+    const quoteRate = pQuote * fxRate;
+    const quoteStr = quoteRate < 0.001 ? quoteRate.toExponential(4) : fmt(quoteRate, quoteRate < 1 ? 6 : 4);
+    const nameToShow = state.lang === 'zh' ? c.name : c.nameEn;
+    const tierFull = c.tier === 1 ? 'tier-1' : (c.tier === 2 ? 'tier-2' : 'tier-3');
+    const tierLabel = c.tier === 1 ? tx('filterTier1') : (c.tier === 2 ? tx('filterTier2') : tx('filterTier3'));
+    const isLive = state.fxSource[c.code] === 'live';
+    const dataTag = isLive ? tx('dataLive') : tx('dataSim');
+    const dataCls = isLive ? 'live' : 'sim';
+    const adaptToShow = state.lang === 'zh' ? c.adaptBiz : c.adaptBiz;
+
+    return `<tr>
+      <td><span style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted)">${globalIdx}</span></td>
+      <td>
+        <div class="country-cell">
+          <span class="country-flag">${c.flag}</span>
+          <div class="country-info">
+            <div class="country-name">${nameToShow}</div>
+            <div class="country-code">${c.code}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <span class="tier-badge ${tierFull}">${tierLabel}</span>
+      </td>
+      <td><span style="font-family:var(--font-mono);font-weight:700;color:#fff">${c.currency}</span></td>
+      <td>
+        <span class="rate-raw">1 USD = ${fmt(fxRate, fxRate > 100 ? 2 : 4)}</span>
+        <div class="data-quality ${dataCls}">${dataTag}</div>
+      </td>
+      <td>
+        <span class="rate-value ${state.quote === 'EACO' || state.quote === 'SOL' ? 'highlight' : ''}">${quoteStr} ${c.currency}</span>
+      </td>
+      <td><span class="adapt-tag">${adaptToShow}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderPagination() {
+  const container = document.getElementById('pagination');
+  const filtered = getFilteredCountries();
+  const totalPages = Math.ceil(filtered.length / state.pageSize);
+  if (totalPages <= 1) { container.innerHTML = ''; return; }
+
+  let html = '';
+  html += `<button class="page-btn" ${state.page===1?'disabled':''} onclick="goPage(${state.page-1})">‹</button>`;
+
+  const maxVisible = 5;
+  let startPage = Math.max(1, state.page - 2);
+  let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+  if (endPage - startPage < maxVisible - 1) startPage = Math.max(1, endPage - maxVisible + 1);
+
+  if (startPage > 1) {
+    html += `<button class="page-btn" onclick="goPage(1)">1</button>`;
+    if (startPage > 2) html += `<span style="color:var(--text-muted);padding:0 4px">…</span>`;
+  }
+  for (let p = startPage; p <= endPage; p++) {
+    const cls = p === state.page ? 'page-btn active' : 'page-btn';
+    html += `<button class="${cls}" onclick="goPage(${p})">${p}</button>`;
+  }
+  if (endPage < totalPages) {
+    if (endPage < totalPages - 1) html += `<span style="color:var(--text-muted);padding:0 4px">…</span>`;
+    html += `<button class="page-btn" onclick="goPage(${totalPages})">${totalPages}</button>`;
+  }
+
+  html += `<button class="page-btn" ${state.page===totalPages?'disabled':''} onclick="goPage(${state.page+1})">›</button>`;
+  html += `<span class="page-info">${tx('page')} ${state.page} ${tx('pageOf')} ${totalPages}</span>`;
+  container.innerHTML = html;
+}
+
+function goPage(p) {
+  const filtered = getFilteredCountries();
+  const totalPages = Math.ceil(filtered.length / state.pageSize);
+  if (p < 1 || p > totalPages) return;
+  state.page = p;
+  renderTable();
+  renderPagination();
+}
+
+function renderTop20() {
+  const container = document.getElementById('top20-grid');
+  container.innerHTML = EACO_TOP20.map(item => `
+    <div class="top20-item">
+      <div class="top20-rank">#${item.rank}</div>
+      <div class="top20-info">
+        <div class="name">${item.name} <span style="font-size:9px;color:var(--accent);font-weight:700;padding:1px 5px;background:var(--accent-dim);border-radius:4px">${item.tier}</span></div>
+        <div class="biz">${item.biz}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderTicker() {
+  const container = document.getElementById('ticker');
+  const pSol = state.prices.SOL ?? 76.29;
+  const pEaco = state.prices.EACO ?? 0.00002523;
+  const pEcnh = state.prices.eCNH ?? 0.1369;
+  // EACO/SOL cross rate
+  const eacoPerSol = pSol > 0 ? (pSol / pEaco) : 0;
+  const solPerEaco = pEaco > 0 ? (pEaco / pSol) : 0;
+
+  const items = [
+    {sym:'EACO', val:`$${fmt(pEaco, 8)}`, ch: fmtChange(state.changes.EACO), dir: state.changes.EACO>=0?'up':'dn'},
+    {sym:'EACO/SOL', val:`${fmt(eacoPerSol, 0)} EA`, ch: '', dir: ''},
+    {sym:'SOL',  val:`$${fmt(pSol, 2)}`, ch: fmtChange(state.changes.SOL), dir: state.changes.SOL>=0?'up':'dn'},
+    {sym:'1 SOL=', val:`$${fmt(pSol, 2)} USD`, ch: '', dir: ''},
+    {sym:'USDT', val:'$1.0000', ch: '0.00%', dir:''},
+    {sym:'USDC', val:'$0.9998', ch:'-0.02%', dir:'dn'},
+    {sym:'eCNH', val:`$${fmt(pEcnh, 4)}`, ch: fmtChange(state.changes.eCNH), dir: state.changes.eCNH>=0?'up':'dn'},
+    {sym:'EUR', val:'$0.9130', ch:'+0.12%', dir:'up'},
+    {sym:'GBP', val:'$1.2980', ch:'+0.08%', dir:'up'},
+    {sym:'JPY', val:'$0.00647', ch:'-0.35%', dir:'dn'},
+    {sym:'SGD', val:'$0.7430', ch:'+0.05%', dir:'up'},
+    {sym:'CHF', val:'$1.1260', ch:'+0.22%', dir:'up'},
+    {sym:'HKD', val:'$0.1282', ch:'0.00%', dir:''},
+    {sym:'CNH', val:`$${fmt(pEcnh, 4)}`, ch: fmtChange(state.changes.eCNH), dir: state.changes.eCNH>=0?'up':'dn'},
+    {sym:'AUD', val:'$0.6540', ch:'-0.18%', dir:'dn'},
+    {sym:'CAD', val:'$0.7190', ch:'+0.10%', dir:'up'},
+    {sym:'BRL', val:'$0.1845', ch:'-1.20%', dir:'dn'},
+    {sym:'INR', val:'$0.01202', ch:'-0.30%', dir:'dn'},
+    {sym:'KRW', val:'$0.000722', ch:'+0.45%', dir:'up'},
+    {sym:'VND', val:'$0.0000415', ch:'-0.55%', dir:'dn'},
+    {sym:'NGN', val:'$0.000676', ch:'-1.80%', dir:'dn'},
+    {sym:'ARS', val:'$0.001087', ch:'-2.10%', dir:'dn'},
+  ];
+  const all = [...items, ...items]; // duplicate for loop
+  container.innerHTML = all.map(i => `
+    <div class="ticker-item">
+      <span class="ticker-sym">${i.sym}</span>
+      <span class="ticker-val">${i.val}</span>
+      ${i.dir ? `<span class="ticker-ch ${i.dir}">${i.ch}</span>` : ''}
+    </div>
+  `).join('');
+}
+
+function updateTime() {
+  const el = document.getElementById('update-time');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`;
+}
+
+// =============================================================
+// INTERACTIVE HANDLERS
+// =============================================================
+function setQuote(quote) {
+  state.quote = quote;
+  document.querySelectorAll('.ctrl-btn[data-quote]').forEach(b => {
+    b.classList.remove('active-sol','active-usdt','active-ecnh','active-eaco');
+    if (b.dataset.quote === quote) {
+      const cls = quote === 'SOL' ? 'active-sol' : (quote === 'USDT' ? 'active-usdt' : (quote === 'eCNH' ? 'active-ecnh' : 'active-eaco'));
+      b.classList.add(cls);
+    }
+  });
+  renderTable();
+  renderPagination();
+}
+
+function setLang(lang) {
+  state.lang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.lang === lang);
+  });
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  renderAll();
+}
+
+function setFilter(filter) {
+  state.filter = filter;
+  state.page = 1;
+  renderFilters();
+  renderTable();
+  renderPagination();
+}
+
+// =============================================================
+// INIT
+// =============================================================
+async function init() {
+  // Try to restore from cache first (instant render)
+  const hasCache = restoreFromCache();
+
+  if (hasCache) {
+    // Show cached data immediately
+    renderAll();
+    setOracleUI('live');
+  } else {
+    // Initialize base FX data
+    for (const c of COUNTRIES_BASE) {
+      state.fxRates[c.code] = c.usdRate;
+      state.fxSource[c.code] = 'sim';
+    }
+    state.prices.SOL = 76.29;   // Orbmarkets LIVE 2026-07-19
+    state.prices.EACO = 0.00002523; // Orbmarkets LIVE 2026-07-19
+    state.prices.eCNH = 0.1369;    // CNY/USD estimate
+    state.prices.USDT = 1;
+    state.prices.USDC = 1;
+    state.lastUpdate = Date.now();
+    state.nextUpdate = state.lastUpdate + UPDATE_INTERVAL_MS;
+    renderAll();
+  }
+
+  // Start countdown
+  startCountdown();
+
+  // Fetch live data (async)
+  syncOracleData();
+
+  // Set up 30-minute auto-update
+  if (state.updateTimer) clearInterval(state.updateTimer);
+  state.updateTimer = setInterval(syncOracleData, UPDATE_INTERVAL_MS);
+
+  // Update time display every second
+  setInterval(updateTime, 1000);
+}
+
+// Run
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
