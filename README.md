@@ -1,7 +1,7 @@
 # eaco50rate
 eaco 50 rate
 
-EACO 50国预言机汇率
+EACO 50国汇率价格预言机
 
 eaco CA:
 DqfoyZH96RnvZusSp3Cdncjpyp3C74ZmJzGhjmHnDHRH
